@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circunferencia Goniométrica Interactiva - Razones Trigonométricas</title>
+    <!-- Tailwind CSS desde CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        sin: '#ef4444', // Red
+                        cos: '#3b82f6', // Blue
+                        tan: '#10b981', // Emerald/Green
+                        sec: '#8b5cf6', // Purple
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Desactivar selección para mejor experiencia táctil */
+        canvas {
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        /* Custom scrollbar para botones de ángulos notables */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- Encabezado Principal -->
+    <header class="bg-slate-800/80 border-b border-slate-700/60 backdrop-blur-md sticky top-0 z-50 px-4 py-3 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-indigo-600/30 border border-indigo-500/40 rounded-xl text-indigo-400">
+                    <i class="fa-solid me-1 fa-circle-notch text-2xl animate-spin-slow"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        Circunferencia Goniométrica
+                        <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">4to Bachillerato Técnico</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Exploración visual de las razones trigonométricas para cualquier ángulo</p>
+                </div>
+            </div>
+
+            <!-- Botones de Control Rápidos superior -->
+            <div class="flex items-center gap-2">
+                <button id="btnToggleUnit" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium border border-slate-600 transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-calculator text-indigo-400"></i>
+                    <span>Modo: <strong id="unitModeLabel" class="text-indigo-300">Grados (°)</strong></span>
+                </button>
+                <button id="btnReset" class="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 text-xs font-medium border border-red-500/30 transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Reiniciar (0°)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto w-full p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+
+        <!-- Columna Izquierda / Superior: Canvas Goniométrico (7 columnas en LG) -->
+        <section class="lg:col-span-7 flex flex-col gap-4">
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 shadow-xl flex flex-col justify-between relative overflow-hidden">
+                <!-- Leyenda Superior en Canvas -->
+                <div class="flex items-center justify-between mb-3 text-xs font-medium text-slate-300 bg-slate-900/50 p-2.5 rounded-xl border border-slate-700/40">
+                    <div class="flex items-center gap-3">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span> Seno</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span> Coseno</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Tangente</span>
+                    </div>
+                    <span class="text-slate-400 hidden sm:inline"><i class="fa-solid fa-hand-pointer text-indigo-400 mr-1"></i> Arrastra el punto P</span>
+                </div>
+
+                <!-- Contenedor del Canvas con aspect ratio controlado -->
+                <div class="relative w-full aspect-square max-h-[500px] mx-auto flex items-center justify-center bg-slate-950/80 rounded-xl border border-slate-800 shadow-inner overflow-hidden">
+                    <canvas id="goniometerCanvas" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+
+                    <!-- Overlay de información de ayuda táctil/mouse -->
+                    <div class="absolute bottom-2 left-2 pointer-events-none bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-700/50 text-[11px] text-slate-400 backdrop-blur-sm">
+                        R = 1 unit | Centro (0,0)
+                    </div>
+                </div>
+
+                <!-- Control Deslizador del Ángulo -->
+                <div class="mt-4 bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/50 flex flex-col gap-2">
+                    <div class="flex justify-between items-center text-sm">
+                        <label for="angleSlider" class="font-semibold text-slate-200 flex items-center gap-2">
+                            <i class="fa-solid fa-compass text-indigo-400"></i> Ángulo (α):
+                        </label>
+                        <div class="font-mono text-base font-bold bg-slate-800 px-3 py-1 rounded-lg border border-slate-700 text-indigo-300 flex items-center gap-2">
+                            <span id="angleValueDeg">0°</span>
+                            <span class="text-slate-500">|</span>
+                            <span id="angleValueRad" class="text-emerald-400 text-xs sm:text-sm">0 rad</span>
+                        </div>
+                    </div>
+
+                    <input type="range" id="angleSlider" min="0" max="360" step="0.5" value="0" 
+                        class="w-full h-2.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+
+                    <!-- Marcadores rápidos en slider -->
+                    <div class="flex justify-between text-[10px] text-slate-400 font-mono px-1">
+                        <span>0°</span>
+                        <span>90°</span>
+                        <span>180°</span>
+                        <span>270°</span>
+                        <span>360°</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones Rápidos de Ángulos Notables -->
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3.5 shadow-xl">
+                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-bolt text-amber-400"></i> Accesos Rápidos a Ángulos Notables:
+                </h3>
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="0">0°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="30">30°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="45">45°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="60">60°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="90">90°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="120">120°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="135">135°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="150">150°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="180">180°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="210">210°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="225">225°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="240">240°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="270">270°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="300">300°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="315">315°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="330">330°</button>
+                    <button class="btn-notable px-2.5 py-1.5 rounded-lg bg-slate-700/70 hover:bg-indigo-600 text-xs font-medium text-slate-200 border border-slate-600/80 transition shrink-0" data-deg="360">360°</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Columna Derecha / Inferior: Paneles de Información Pedagógica (5 columnas en LG) -->
+        <section class="lg:col-span-5 flex flex-col gap-4">
+
+            <!-- Panel de Cuadrante Activo y Signos -->
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 shadow-xl">
+                <div class="flex items-center justify-between border-b border-slate-700/60 pb-3 mb-3">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ubicación Goniométrica</span>
+                    <span id="quadrantBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                        Cuadrante I
+                    </span>
+                </div>
+
+                <!-- Tabla/Grid de Signos en el cuadrante -->
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-700/40">
+                        <span class="text-[11px] text-slate-400 block mb-0.5">Seno (Y)</span>
+                        <span id="signSin" class="text-lg font-bold text-red-400">+</span>
+                    </div>
+                    <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-700/40">
+                        <span class="text-[11px] text-slate-400 block mb-0.5">Coseno (X)</span>
+                        <span id="signCos" class="text-lg font-bold text-blue-400">+</span>
+                    </div>
+                    <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-700/40">
+                        <span class="text-[11px] text-slate-400 block mb-0.5">Tangente (Y/X)</span>
+                        <span id="signTan" class="text-lg font-bold text-emerald-400">+</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Valores Numéricos Actualizados -->
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 shadow-xl flex flex-col gap-3">
+                <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Valores Numéricos (Decimales)</h2>
+
+                <div class="space-y-2 font-mono">
+                    <!-- Seno -->
+                    <div class="flex items-center justify-between bg-slate-900/70 p-3 rounded-xl border-l-4 border-red-500 border-t border-r border-b border-slate-700/50">
+                        <div class="flex items-center gap-2">
+                            <span class="text-red-400 font-bold text-sm">sen(α)</span>
+                            <span class="text-xs text-slate-400 font-sans">(Opuesto / Hip)</span>
+                        </div>
+                        <span id="valSin" class="text-lg font-bold text-red-400">0.00</span>
+                    </div>
+
+                    <!-- Coseno -->
+                    <div class="flex items-center justify-between bg-slate-900/70 p-3 rounded-xl border-l-4 border-blue-500 border-t border-r border-b border-slate-700/50">
+                        <div class="flex items-center gap-2">
+                            <span class="text-blue-400 font-bold text-sm">cos(α)</span>
+                            <span class="text-xs text-slate-400 font-sans">(Adyacente / Hip)</span>
+                        </div>
+                        <span id="valCos" class="text-lg font-bold text-blue-400">1.00</span>
+                    </div>
+
+                    <!-- Tangente -->
+                    <div class="flex items-center justify-between bg-slate-900/70 p-3 rounded-xl border-l-4 border-emerald-500 border-t border-r border-b border-slate-700/50">
+                        <div class="flex items-center gap-2">
+                            <span class="text-emerald-400 font-bold text-sm">tan(α)</span>
+                            <span class="text-xs text-slate-400 font-sans">(sen / cos)</span>
+                        </div>
+                        <span id="valTan" class="text-lg font-bold text-emerald-400">0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Destacado de Ángulos Notables (Valores Exactos) -->
+            <div id="notablePanel" class="bg-gradient-to-br from-indigo-900/40 via-slate-800/80 to-purple-900/30 border border-indigo-500/40 rounded-2xl p-4 shadow-xl relative overflow-hidden transition-all duration-300">
+                <div class="flex items-center justify-between border-b border-indigo-500/30 pb-2.5 mb-3">
+                    <span class="text-xs font-semibold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-star text-amber-400"></i> Valor Exacto (Ángulo Notable)
+                    </span>
+                    <span id="notableDegreeBadge" class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
+                        0° (0 rad)
+                    </span>
+                </div>
+
+                <!-- Tarjeta con Expresiones Algebraicas / Fracciones -->
+                <div id="notableContent" class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-slate-900/80 p-2.5 rounded-xl border border-indigo-500/20">
+                        <span class="text-[11px] text-slate-400 block mb-1">sen</span>
+                        <span id="notableSin" class="text-base font-bold text-red-300 font-mono">0</span>
+                    </div>
+                    <div class="bg-slate-900/80 p-2.5 rounded-xl border border-indigo-500/20">
+                        <span class="text-[11px] text-slate-400 block mb-1">cos</span>
+                        <span id="notableCos" class="text-base font-bold text-blue-300 font-mono">1</span>
+                    </div>
+                    <div class="bg-slate-900/80 p-2.5 rounded-xl border border-indigo-500/20">
+                        <span class="text-[11px] text-slate-400 block mb-1">tan</span>
+                        <span id="notableTan" class="text-base font-bold text-emerald-300 font-mono">0</span>
+                    </div>
+                </div>
+
+                <!-- Indicador cuando NO es ángulo notable -->
+                <div id="notablePlaceholder" class="hidden text-center py-3 text-xs text-slate-400 italic">
+                    Arrastra el punto o ajusta el deslizador hacia un ángulo notable (0°, 30°, 45°, 60°, 90°, 180°, etc.) para ver sus fracciones exactas.
+                </div>
+            </div>
+
+            <!-- Resumen Teórico Rápido -->
+            <div class="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-4 text-xs text-slate-400 space-y-1.5">
+                <p><strong class="text-slate-300">Nota Didáctica:</strong> En la circunferencia unidad (R = 1):</p>
+                <ul class="list-disc pl-4 space-y-1 text-slate-400">
+                    <li>La coordenada <strong class="text-red-400">Y</strong> del punto P es el <strong class="text-red-400">Seno</strong>.</li>
+                    <li>La coordenada <strong class="text-blue-400">X</strong> del punto P es el <strong class="text-blue-400">Coseno</strong>.</li>
+                    <li>La intersección de la prolongación del radio con la recta x = 1 define la <strong class="text-emerald-400">Tangente</strong>.</li>
+                </ul>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="bg-slate-950 border-t border-slate-800 py-3 text-center text-xs text-slate-500">
+        <p>Recurso Educativo Interactivo • Educación Técnica Bachillerato • Razones Trigonométricas</p>
+    </footer>
+
+    <!-- Lógica de la Simulación JavaScript -->
+    <script>
+        // --- BASE DE DATOS DE ÁNGULOS NOTABLES (0° A 360°) ---
+        const NOTABLE_ANGLES = {
+            0:   { deg: "0°",   rad: "0",        sin: "0",        cos: "1",        tan: "0" },
+            30:  { deg: "30°",  rad: "π/6",      sin: "1/2",      cos: "√3/2",     tan: "√3/3" },
+            45:  { deg: "45°",  rad: "π/4",      sin: "√2/2",     cos: "√2/2",     tan: "1" },
+            60:  { deg: "60°",  rad: "π/3",      sin: "√3/2",     cos: "1/2",      tan: "√3" },
+            90:  { deg: "90°",  rad: "π/2",      sin: "1",        cos: "0",        tan: "Indefinido (±∞)" },
+            120: { deg: "120°", rad: "2π/3",     sin: "√3/2",     cos: "-1/2",     tan: "-√3" },
+            135: { deg: "135°", rad: "3π/4",     sin: "√2/2",     cos: "-√2/2",    tan: "-1" },
+            150: { deg: "150°", rad: "5π/6",     sin: "1/2",      cos: "-√3/2",    tan: "-√3/3" },
+            180: { deg: "180°", rad: "π",        sin: "0",        cos: "-1",       tan: "0" },
+            210: { deg: "210°", rad: "7π/6",     sin: "-1/2",     cos: "-√3/2",    tan: "√3/3" },
+            225: { deg: "225°", rad: "5π/4",     sin: "-√2/2",    cos: "-√2/2",    tan: "1" },
+            240: { deg: "240°", rad: "4π/3",     sin: "-√3/2",    cos: "-1/2",     tan: "√3" },
+            270: { deg: "270°", rad: "3π/2",     sin: "-1",       cos: "0",        tan: "Indefinido (±∞)" },
+            300: { deg: "300°", rad: "5π/3",     sin: "-√3/2",    cos: "1/2",      tan: "-√3" },
+            315: { deg: "315°", rad: "7π/4",     sin: "-√2/2",    cos: "√2/2",     tan: "-1" },
+            330: { deg: "330°", rad: "11π/6",    sin: "-1/2",     cos: "√3/2",     tan: "-√3/3" },
+            360: { deg: "360°", rad: "2π",       sin: "0",        cos: "1",        tan: "0" }
+        };
+
+        // --- ESTADO GLOBAL DE LA APLICACIÓN ---
+        let currentAngleDeg = 45; // Ángulo inicial en grados
+        let unitMode = 'deg'; // 'deg' o 'rad'
+        let isDragging = false;
+
+        // --- ELEMENTOS DEL DOM ---
+        const canvas = document.getElementById('goniometerCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const slider = document.getElementById('angleSlider');
+        const valDegLabel = document.getElementById('angleValueDeg');
+        const valRadLabel = document.getElementById('angleValueRad');
+
+        const btnToggleUnit = document.getElementById('btnToggleUnit');
+        const unitModeLabel = document.getElementById('unitModeLabel');
+        const btnReset = document.getElementById('btnReset');
+
+        const valSin = document.getElementById('valSin');
+        const valCos = document.getElementById('valCos');
+        const valTan = document.getElementById('valTan');
+
+        const signSin = document.getElementById('signSin');
+        const signCos = document.getElementById('signCos');
+        const signTan = document.getElementById('signTan');
+        const quadrantBadge = document.getElementById('quadrantBadge');
+
+        const notableDegreeBadge = document.getElementById('notableDegreeBadge');
+        const notableContent = document.getElementById('notableContent');
+        const notablePlaceholder = document.getElementById('notablePlaceholder');
+        const notableSin = document.getElementById('notableSin');
+        const notableCos = document.getElementById('notableCos');
+        const notableTan = document.getElementById('notableTan');
+
+        // --- AJUSTE RESPONSIVO DEL CANVAS ---
+        let width = 0;
+        let height = 0;
+        let centerX = 0;
+        let centerY = 0;
+        let radius = 0; // Radio del círculo en píxeles (R=1)
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            // Soporte para alta densidad de píxeles (Retina display)
+            const dpr = window.devicePixelRatio || 1;
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            width = canvas.width;
+            height = canvas.height;
+
+            centerX = width / 2;
+            centerY = height / 2;
+            // Margen para permitir extender la recta tangente e hiper-extensiones sin desbordar
+            radius = Math.min(width, height) * 0.35;
+
+            draw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- UTILITIES Y CONVERSIONES ---
+        function degToRad(deg) {
+            return (deg * Math.PI) / 180;
+        }
+
+        function radToDeg(rad) {
+            let deg = (rad * 180) / Math.PI;
+            if (deg < 0) deg += 360;
+            return deg % 360;
+        }
+
+        // Formateador simplificado para radianes genéricos
+        function formatRadString(deg) {
+            const exact = NOTABLE_ANGLES[Math.round(deg)];
+            if (exact && Math.abs(deg - Math.round(deg)) < 0.1) {
+                return exact.rad + " rad";
+            }
+            const rad = degToRad(deg);
+            return (rad / Math.PI).toFixed(2) + "π rad";
+        }
+
+        // --- ACTUALIZACIÓN DE LA UI Y PANELES ---
+        function updateUI() {
+            const rad = degToRad(currentAngleDeg);
+            const sinVal = Math.sin(rad);
+            const cosVal = Math.cos(rad);
+            const tanVal = Math.abs(cosVal) < 1e-6 ? Infinity : Math.tan(rad);
+
+            // 1. Sliders y etiquetas de ángulo
+            slider.value = currentAngleDeg;
+            valDegLabel.textContent = `${currentAngleDeg.toFixed(1)}°`;
+            valRadLabel.textContent = formatRadString(currentAngleDeg);
+
+            // 2. Valores numéricos con 2 decimales
+            valSin.textContent = sinVal.toFixed(2);
+            valCos.textContent = cosVal.toFixed(2);
+            
+            if (!isFinite(tanVal) || Math.abs(cosVal) < 1e-4) {
+                valTan.textContent = "±∞";
+            } else {
+                valTan.textContent = tanVal.toFixed(2);
+            }
+
+            // 3. Cuadrante y Signos
+            let quadText = "Eje / Límite";
+            let sSin = "+", sCos = "+", sTan = "+";
+
+            const normDeg = (currentAngleDeg % 360 + 360) % 360;
+
+            if (normDeg > 0 && normDeg < 90) {
+                quadText = "Cuadrante I";
+                sSin = "+"; sCos = "+"; sTan = "+";
+            } else if (normDeg > 90 && normDeg < 180) {
+                quadText = "Cuadrante II";
+                sSin = "+"; sCos = "-"; sTan = "-";
+            } else if (normDeg > 180 && normDeg < 270) {
+                quadText = "Cuadrante III";
+                sSin = "-"; sCos = "-"; sTan = "+";
+            } else if (normDeg > 270 && normDeg < 360) {
+                quadText = "Cuadrante IV";
+                sSin = "-"; sCos = "+"; sTan = "-";
+            } else {
+                // Sobre los ejes
+                if (normDeg === 0 || normDeg === 360) { quadText = "Eje X (+)"; sSin = "0"; sCos = "+1"; sTan = "0"; }
+                else if (normDeg === 90) { quadText = "Eje Y (+)"; sSin = "+1"; sCos = "0"; sTan = "±∞"; }
+                else if (normDeg === 180) { quadText = "Eje X (-)"; sSin = "0"; sCos = "-1"; sTan = "0"; }
+                else if (normDeg === 270) { quadText = "Eje Y (-)"; sSin = "-1"; sCos = "0"; sTan = "±∞"; }
+            }
+
+            quadrantBadge.textContent = quadText;
+            signSin.textContent = sSin;
+            signCos.textContent = sCos;
+            signTan.textContent = sTan;
+
+            // Colores de signos para mayor claridad visual
+            signSin.className = `text-lg font-bold ${sSin === '+' ? 'text-red-400' : sSin === '-' ? 'text-red-400' : 'text-slate-400'}`;
+            signCos.className = `text-lg font-bold ${sCos === '+' ? 'text-blue-400' : sCos === '-' ? 'text-blue-400' : 'text-slate-400'}`;
+            signTan.className = `text-lg font-bold ${sTan === '+' ? 'text-emerald-400' : sTan === '-' ? 'text-emerald-400' : 'text-slate-400'}`;
+
+            // 4. Panel de Ángulos Notables
+            // Verificamos si estamos dentro de una tolerancia cercana a un ángulo notable (±1.5°)
+            let nearestNotable = null;
+            for (const key in NOTABLE_ANGLES) {
+                if (Math.abs(normDeg - key) <= 1.5) {
+                    nearestNotable = NOTABLE_ANGLES[key];
+                    break;
+                }
+            }
+
+            if (nearestNotable) {
+                notableDegreeBadge.textContent = `${nearestNotable.deg} (${nearestNotable.rad} rad)`;
+                notableSin.textContent = nearestNotable.sin;
+                notableCos.textContent = nearestNotable.cos;
+                notableTan.textContent = nearestNotable.tan;
+
+                notableContent.classList.remove('hidden');
+                notablePlaceholder.classList.add('hidden');
+            } else {
+                notableDegreeBadge.textContent = "Ángulo genérico";
+                notableContent.classList.add('hidden');
+                notablePlaceholder.classList.remove('hidden');
+            }
+        }
+
+        // --- RENDERIZADO DEL CANVAS 2D ---
+        function draw() {
+            if (!ctx) return;
+
+            // Limpieza del lienzo
+            ctx.clearRect(0, 0, width, height);
+
+            const rad = degToRad(currentAngleDeg);
+            const cosVal = Math.cos(rad);
+            const sinVal = Math.sin(rad);
+
+            // Coordenadas en pantalla
+            const px = centerX + cosVal * radius;
+            const py = centerY - sinVal * radius; // Invertido en Canvas Y
+
+            // 1. Dibujar Rejilla sutil de fondo
+            ctx.strokeStyle = '#1e293b'; // Slate 800
+            ctx.lineWidth = 1;
+            const step = radius / 4;
+            for (let x = centerX % step; x < width; x += step) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+            }
+            for (let y = centerY % step; y < height; y += step) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+            }
+
+            // 2. Ejes Cartesianos Principales (X e Y)
+            ctx.strokeStyle = '#64748b'; // Slate 500
+            ctx.lineWidth = 2;
+            
+            // Eje X
+            ctx.beginPath();
+            ctx.moveTo(10, centerY);
+            ctx.lineTo(width - 10, centerY);
+            ctx.stroke();
+
+            // Eje Y
+            ctx.beginPath();
+            ctx.moveTo(centerX, 10);
+            ctx.lineTo(centerX, height - 10);
+            ctx.stroke();
+
+            // Flechas de los ejes
+            ctx.fillStyle = '#64748b';
+            // Flecha X
+            ctx.beginPath();
+            ctx.moveTo(width - 10, centerY - 5);
+            ctx.lineTo(width, centerY);
+            ctx.lineTo(width - 10, centerY + 5);
+            ctx.fill();
+            // Flecha Y
+            ctx.beginPath();
+            ctx.moveTo(centerX - 5, 10);
+            ctx.lineTo(centerX, 0);
+            ctx.lineTo(centerX + 5, 10);
+            ctx.fill();
+
+            // Marcas en los ejes (+1, -1)
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('1', centerX + radius, centerY + 20);
+            ctx.fillText('-1', centerX - radius, centerY + 20);
+            ctx.fillText('1', centerX - 15, centerY - radius + 4);
+            ctx.fillText('-1', centerX - 15, centerY + radius + 4);
+            ctx.fillText('(0,0)', centerX - 20, centerY + 18);
+
+            // 3. Circunferencia Goniométrica (R = 1)
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = '#cbd5e1'; // Slate 300
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // 4. Sector circular sombreado suavemente para el ángulo
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, radius, 0, -rad, true); // Sentido antihorario en canvas
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.15)'; // Indigo translúcido
+            ctx.fill();
+
+            // Arco indicador del ángulo
+            const arcRadius = Math.min(radius * 0.3, 45);
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, arcRadius, 0, -rad, true);
+            ctx.strokeStyle = '#818cf8'; // Indigo 400
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Etiqueta alpha en el arco
+            const midArcAngle = -rad / 2;
+            const labelX = centerX + (arcRadius + 15) * Math.cos(midArcAngle);
+            const labelY = centerY + (arcRadius + 15) * Math.sin(midArcAngle);
+            ctx.fillStyle = '#c7d2fe';
+            ctx.font = 'bold 13px Inter, sans-serif';
+            ctx.fillText('α', labelX, labelY);
+
+            // 5. Recta Tangente Vertical (x = 1)
+            const tangentLineX = centerX + radius;
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)'; // Emerald transparente
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(tangentLineX, 0);
+            ctx.lineTo(tangentLineX, height);
+            ctx.stroke();
+            ctx.setLineDash([]); // Restablecer línea sólida
+
+            // Etiqueta de la recta tangente x = 1
+            ctx.fillStyle = '#10b981';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('recta x = 1', tangentLineX + 6, 20);
+
+            // 6. Prolongación del radio hacia la recta tangente (para la Tangente)
+            if (Math.abs(cosVal) > 1e-4) {
+                const tanVal = Math.tan(rad);
+                const tanY = centerY - tanVal * radius;
+
+                // Línea discontinua de prolongación
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([3, 3]);
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                // Si el coseno es positivo va hacia adelante, si es negativo se prolonga en dirección opuesta
+                if (cosVal > 0) {
+                    ctx.lineTo(tangentLineX, tanY);
+                } else {
+                    // Prolongación hacia la derecha atravesando el origen
+                    ctx.lineTo(tangentLineX, tanY);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // --- DIBUJO DEL SEGMENTO TANGENTE ---
+                // Truncado visual para no salirse bruscamente del lienzo si la tangente es enorme
+                const clampedTanY = Math.max(10, Math.min(height - 10, tanY));
+                ctx.strokeStyle = '#10b981'; // Emerald/Verde
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(tangentLineX, centerY);
+                ctx.lineTo(tangentLineX, clampedTanY);
+                ctx.stroke();
+
+                // Punto de intersección de la tangente
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.arc(tangentLineX, clampedTanY, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 7. Radio de la circunferencia hasta el punto P
+            ctx.strokeStyle = '#f8fafc';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(px, py);
+            ctx.stroke();
+
+            // 8. SEGMENTO COSENO (Proyección Horizontal en Eje X)
+            ctx.strokeStyle = '#3b82f6'; // Azul
+            ctx.lineWidth = 4.5;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(px, centerY);
+            ctx.stroke();
+
+            // Linea punteada auxiliar de proyección vertical desde P al Eje X
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(px, centerY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 9. SEGMENTO SENO (Proyección Vertical desde P al Eje X)
+            ctx.strokeStyle = '#ef4444'; // Rojo
+            ctx.lineWidth = 4.5;
+            ctx.beginPath();
+            ctx.moveTo(px, centerY);
+            ctx.lineTo(px, py);
+            ctx.stroke();
+
+            // 10. PUNTO P (Interactivable / Arrastrable)
+            // Halo exterior animado / brillante
+            ctx.fillStyle = 'rgba(238, 242, 255, 0.3)';
+            ctx.beginPath();
+            ctx.arc(px, py, 11, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Centro del Punto P
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#6366f1';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(px, py, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Etiqueta del Punto P
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 13px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            const offsetLabelX = cosVal >= 0 ? 12 : -30;
+            const offsetLabelY = sinVal >= 0 ? -12 : 20;
+            ctx.fillText('P(cos, sen)', px + offsetLabelX, py + offsetLabelY);
+        }
+
+        // --- INTERACTIVIDAD Y EVENTOS (MOUSE Y TOUCH) ---
+
+        function updateAngleFromCoords(x, y) {
+            const dx = x - centerX;
+            const dy = centerY - y; // Invertido en Canvas Y
+
+            let rad = Math.atan2(dy, dx);
+            let deg = radToDeg(rad);
+
+            currentAngleDeg = Math.round(deg * 2) / 2; // Suavizado a pasos de 0.5°
+            updateUI();
+            draw();
+        }
+
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            // Escalar coordenadas del cliente al espacio interno del canvas (DPR)
+            const dpr = canvas.width / rect.width;
+            return {
+                x: (clientX - rect.left) * dpr,
+                y: (clientY - rect.top) * dpr
+            };
+        }
+
+        function isNearPointP(coords) {
+            const rad = degToRad(currentAngleDeg);
+            const px = centerX + Math.cos(rad) * radius;
+            const py = centerY - Math.sin(rad) * radius;
+
+            const dist = Math.hypot(coords.x - px, coords.y - py);
+            return dist < 35; // Tolerancia de área táctil
+        }
+
+        // Eventos Mouse
+        canvas.addEventListener('mousedown', (e) => {
+            const coords = getCanvasCoordinates(e);
+            // Se activa arrastre al hacer clic cerca del punto P o en cualquier parte del canvas para mayor comodidad
+            isDragging = true;
+            updateAngleFromCoords(coords.x, coords.y);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const coords = getCanvasCoordinates(e);
+            updateAngleFromCoords(coords.x, coords.y);
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Eventos Touch (Pantallas Táctiles)
+        canvas.addEventListener('touchstart', (e) => {
+            const coords = getCanvasCoordinates(e);
+            isDragging = true;
+            updateAngleFromCoords(coords.x, coords.y);
+            e.preventDefault();
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const coords = getCanvasCoordinates(e);
+            updateAngleFromCoords(coords.x, coords.y);
+            e.preventDefault();
+        }, { passive: false });
+
+        window.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        // Evento Slider
+        slider.addEventListener('input', (e) => {
+            currentAngleDeg = parseFloat(e.target.value);
+            updateUI();
+            draw();
+        });
+
+        // Evento Toggle Unidad (Grados / Radianes)
+        btnToggleUnit.addEventListener('click', () => {
+            unitMode = unitMode === 'deg' ? 'rad' : 'deg';
+            unitModeLabel.textContent = unitMode === 'deg' ? 'Grados (°)' : 'Radianes (rad)';
+            updateUI();
+        });
+
+        // Evento Reiniciar
+        btnReset.addEventListener('click', () => {
+            currentAngleDeg = 0;
+            updateUI();
+            draw();
+        });
+
+        // Eventos Botones Ángulos Notables
+        document.querySelectorAll('.btn-notable').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const deg = parseFloat(btn.getAttribute('data-deg'));
+                currentAngleDeg = deg;
+                updateUI();
+                draw();
+            });
+        });
+
+        // --- INICIALIZACIÓN ---
+        window.onload = function() {
+            resizeCanvas();
+            updateUI();
+            draw();
+        };
+    </script>
+</body>
+</html>
